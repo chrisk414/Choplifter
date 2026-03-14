@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import {
-  GAME_WIDTH, GAME_HEIGHT, WORLD_WIDTH, GROUND_Y,
+  GAME_WIDTH, GAME_HEIGHT, WORLD_WIDTH, GROUND_Y, HUD_HEIGHT,
   BASE_X, BARRACKS_POSITIONS, HELI_LIVES,
-  COLOR_SKY, HELI_MAX_PASSENGERS,
+  COLOR_SKY, FUEL_MAX, FUEL_DRAIN_RATE, FUEL_REFUEL_RATE,
 } from '../constants';
 import { Helicopter } from '../entities/Helicopter';
 import { Hostage, HostageState } from '../entities/Hostage';
@@ -24,6 +24,7 @@ export class GameScene extends Phaser.Scene {
   spawnerSystem!: SpawnerSystem;
   rescueSystem!: RescueSystem;
   lives = HELI_LIVES;
+  fuel = FUEL_MAX;
 
   private bulletGroup!: Phaser.Physics.Arcade.Group;
   private missileGroup!: Phaser.Physics.Arcade.Group;
@@ -35,7 +36,9 @@ export class GameScene extends Phaser.Scene {
   private groundPlatform!: Phaser.Physics.Arcade.StaticGroup;
   private mountainBg!: Phaser.GameObjects.TileSprite;
   private hillBg!: Phaser.GameObjects.TileSprite;
+  private clouds: Phaser.GameObjects.Image[] = [];
   private debugMode = false;
+  private gameOverTriggered = false;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -43,22 +46,28 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     this.lives = HELI_LIVES;
+    this.fuel = FUEL_MAX;
+    this.gameOverTriggered = false;
 
     // Sound
     this.soundManager = new SoundManager();
     this.soundManager.init();
 
-    // Sky background
+    // Sky background (bright cyan)
     this.cameras.main.setBackgroundColor(COLOR_SKY);
 
-    // Parallax backgrounds
-    this.mountainBg = this.add.tileSprite(0, GROUND_Y - 140, GAME_WIDTH, 200, 'mountains')
+    // Parallax mountain background
+    this.mountainBg = this.add.tileSprite(0, GROUND_Y - 140, GAME_WIDTH, 180, 'mountains')
       .setOrigin(0, 0).setScrollFactor(0).setDepth(1);
 
-    this.hillBg = this.add.tileSprite(0, GROUND_Y - 60, GAME_WIDTH, 120, 'hills')
+    // Green hills in front of mountains
+    this.hillBg = this.add.tileSprite(0, GROUND_Y - 60, GAME_WIDTH, 100, 'hills')
       .setOrigin(0, 0).setScrollFactor(0).setDepth(2);
 
-    // Ground
+    // Clouds scattered across the sky
+    this.createClouds();
+
+    // Ground (desert sand with grass strip)
     this.groundPlatform = this.physics.add.staticGroup();
     const groundTiles = Math.ceil(WORLD_WIDTH / GAME_WIDTH) + 1;
     for (let i = 0; i < groundTiles; i++) {
@@ -71,8 +80,11 @@ export class GameScene extends Phaser.Scene {
       ground.refreshBody();
     }
 
+    // Scatter rocks across the desert ground
+    this.createRocks();
+
     // Home base
-    this.add.image(BASE_X, GROUND_Y - 30, 'base').setDepth(4);
+    this.add.image(BASE_X + 20, GROUND_Y - 24, 'base').setDepth(4);
 
     // Barracks
     this.barracksGroup = this.physics.add.group({ classType: Barracks, runChildUpdate: false });
@@ -91,12 +103,12 @@ export class GameScene extends Phaser.Scene {
     // Helicopter
     this.helicopter = new Helicopter(this, BASE_X + 130, GROUND_Y - 40);
 
-    // Camera
+    // Camera - offset to account for HUD panel at top
     this.cameras.main.setBounds(0, 0, WORLD_WIDTH, GAME_HEIGHT);
     this.cameras.main.startFollow(this.helicopter, true, 0.1, 0.1);
 
     // Physics world bounds
-    this.physics.world.setBounds(0, 0, WORLD_WIDTH, GAME_HEIGHT);
+    this.physics.world.setBounds(0, HUD_HEIGHT, WORLD_WIDTH, GAME_HEIGHT - HUD_HEIGHT);
 
     // Collisions
     this.setupCollisions();
@@ -105,7 +117,7 @@ export class GameScene extends Phaser.Scene {
     this.spawnerSystem = new SpawnerSystem(this);
     this.rescueSystem = new RescueSystem(this);
 
-    // HUD
+    // HUD (drawn on top of everything)
     this.hud = new HUD(this);
 
     // Debug toggle
@@ -121,9 +133,40 @@ export class GameScene extends Phaser.Scene {
     this.updateDebugState();
   }
 
+  private createClouds(): void {
+    this.clouds = [];
+    const cloudTextures = ['cloud-small', 'cloud-medium', 'cloud-large'];
+
+    // Place clouds across the world
+    for (let x = 100; x < WORLD_WIDTH; x += 150 + Math.random() * 300) {
+      const tex = cloudTextures[Math.floor(Math.random() * cloudTextures.length)];
+      const y = HUD_HEIGHT + 20 + Math.random() * (GROUND_Y - HUD_HEIGHT - 200);
+      const cloud = this.add.image(x, y, tex)
+        .setDepth(0.5)
+        .setAlpha(0.8 + Math.random() * 0.2)
+        .setScale(1 + Math.random() * 1.5);
+      this.clouds.push(cloud);
+    }
+  }
+
+  private createRocks(): void {
+    const rockTextures = ['rock-small', 'rock-medium', 'rock-large'];
+
+    for (let x = 300; x < WORLD_WIDTH; x += 60 + Math.random() * 200) {
+      const tex = rockTextures[Math.floor(Math.random() * rockTextures.length)];
+      const offsetY = 20 + Math.random() * (GAME_HEIGHT - GROUND_Y - 40);
+      this.add.image(x, GROUND_Y + offsetY, tex)
+        .setDepth(3.5)
+        .setAlpha(0.7 + Math.random() * 0.3);
+    }
+  }
+
   update(time: number, delta: number): void {
     // Update helicopter
     this.helicopter.update(time, delta);
+
+    // Fuel system
+    this.updateFuel();
 
     // Update hostages
     const hostages = this.hostageGroup.getChildren().slice();
@@ -173,6 +216,24 @@ export class GameScene extends Phaser.Scene {
 
     // Debug state for tests
     this.updateDebugState();
+  }
+
+  private updateFuel(): void {
+    if (this.helicopter.isDead) return;
+
+    if (this.helicopter.isAtBase()) {
+      // Refuel at base
+      this.fuel = Math.min(FUEL_MAX, this.fuel + FUEL_REFUEL_RATE);
+    } else if (!this.helicopter.isLanded) {
+      // Drain fuel while flying
+      this.fuel -= FUEL_DRAIN_RATE;
+    }
+
+    // Out of fuel = crash
+    if (this.fuel <= 0) {
+      this.fuel = 0;
+      this.helicopterCrash();
+    }
   }
 
   private setupCollisions(): void {
@@ -278,13 +339,17 @@ export class GameScene extends Phaser.Scene {
       // Respawn after delay
       this.time.delayedCall(2000, () => {
         this.helicopter.respawn(BASE_X + 130, GROUND_Y - 60);
+        this.fuel = FUEL_MAX;
         this.hud.showMessage('GET READY!');
       });
     }
   }
 
   private checkGameOver(): void {
+    if (this.gameOverTriggered) return;
+
     if (this.lives <= 0 && this.helicopter.isDead) {
+      this.gameOverTriggered = true;
       this.time.delayedCall(2000, () => {
         this.scene.start('GameOverScene', {
           rescued: this.rescueSystem.rescued,
@@ -295,6 +360,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.rescueSystem.isGameComplete) {
+      this.gameOverTriggered = true;
       this.time.delayedCall(1000, () => {
         this.scene.start('GameOverScene', {
           rescued: this.rescueSystem.rescued,
@@ -330,6 +396,7 @@ export class GameScene extends Phaser.Scene {
       hostagesDead: this.rescueSystem.dead,
       passengers: this.helicopter.passengers,
       lives: this.lives,
+      fuel: this.fuel,
       scene: this.scene.key,
     };
   }
