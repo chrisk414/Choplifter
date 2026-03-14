@@ -12,12 +12,22 @@ export class SpawnerSystem {
   private lastTankSpawn = 0;
   private lastJetSpawn = 0;
   private lastUfoSpawn = 0;
+  private initialized = false;
 
   constructor(scene: GameScene) {
     this.scene = scene;
   }
 
   update(time: number): void {
+    // Initialize spawn timers on first update so enemies don't spawn immediately
+    if (!this.initialized) {
+      this.initialized = true;
+      this.lastTankSpawn = time;
+      this.lastJetSpawn = time;
+      this.lastUfoSpawn = time;
+      return;
+    }
+
     const diff = this.rescueTrips;
     const spawnMult = Math.pow(DIFFICULTY_SPAWN_MULTIPLIER, diff);
 
