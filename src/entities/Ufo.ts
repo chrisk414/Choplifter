@@ -1,14 +1,14 @@
 import Phaser from 'phaser';
 import {
   UFO_SPEED, UFO_FIRE_RATE, UFO_HEALTH,
-  UFO_SIZE, WORLD_WIDTH, GAME_HEIGHT,
+  UFO_SIZE, WORLD_WIDTH, HUD_HEIGHT, GROUND_Y,
 } from '../constants';
 import type { GameScene } from '../scenes/GameScene';
 
 export class Ufo extends Phaser.Physics.Arcade.Sprite {
   health: number = UFO_HEALTH;
   private gameScene: GameScene;
-  private lastFireTime = 0;
+  private lastFireTime = -1;
   private speed: number;
   private fireRate: number;
   private sineOffset: number;
@@ -18,7 +18,7 @@ export class Ufo extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: GameScene, speed: number = UFO_SPEED, fireRate: number = UFO_FIRE_RATE) {
     const startX = Math.random() > 0.5 ? WORLD_WIDTH + 50 : -50;
-    const y = 80 + Math.random() * (GAME_HEIGHT * 0.3);
+    const y = HUD_HEIGHT + 30 + Math.random() * (GROUND_Y - HUD_HEIGHT - 120);
     super(scene, startX, y, 'ufo');
 
     this.gameScene = scene;
@@ -51,6 +51,9 @@ export class Ufo extends Phaser.Physics.Arcade.Sprite {
     // Sine wave movement
     this.moveAngle += delta * 0.003;
     this.y = this.baseY + Math.sin(this.moveAngle + this.sineOffset) * this.sineAmplitude;
+
+    // Initialize fire timer
+    if (this.lastFireTime < 0) this.lastFireTime = time;
 
     // Shoot spread at helicopter
     const heli = this.gameScene.helicopter;

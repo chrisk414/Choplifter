@@ -1,19 +1,19 @@
 import Phaser from 'phaser';
 import {
   JET_SPEED, JET_FIRE_RATE, JET_MISSILE_SPEED,
-  JET_WIDTH, WORLD_WIDTH, GAME_HEIGHT,
+  JET_WIDTH, WORLD_WIDTH, HUD_HEIGHT, GROUND_Y,
 } from '../constants';
 import type { GameScene } from '../scenes/GameScene';
 
 export class Jet extends Phaser.Physics.Arcade.Sprite {
   private gameScene: GameScene;
-  private lastFireTime = 0;
+  private lastFireTime = -1; // -1 means not yet initialized
   private speed: number;
   private fireRate: number;
 
   constructor(scene: GameScene, fromRight: boolean, speed: number = JET_SPEED, fireRate: number = JET_FIRE_RATE) {
     const startX = fromRight ? WORLD_WIDTH + 50 : -50;
-    const y = 60 + Math.random() * (GAME_HEIGHT * 0.4);
+    const y = HUD_HEIGHT + 20 + Math.random() * (GROUND_Y - HUD_HEIGHT - 100);
     super(scene, startX, y, 'jet');
 
     this.gameScene = scene;
@@ -36,6 +36,11 @@ export class Jet extends Phaser.Physics.Arcade.Sprite {
     if (this.x < -100 || this.x > WORLD_WIDTH + 100) {
       this.destroy();
       return;
+    }
+
+    // Initialize fire timer on first visible update
+    if (this.lastFireTime < 0) {
+      this.lastFireTime = time;
     }
 
     // Shoot at helicopter

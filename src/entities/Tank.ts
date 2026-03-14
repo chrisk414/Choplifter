@@ -7,7 +7,7 @@ import type { GameScene } from '../scenes/GameScene';
 
 export class Tank extends Phaser.Physics.Arcade.Sprite {
   private gameScene: GameScene;
-  private lastFireTime = 0;
+  private lastFireTime = -1;
   private moveDirection = 1;
   private fireRate: number;
 
@@ -39,6 +39,9 @@ export class Tank extends Phaser.Physics.Arcade.Sprite {
       this.moveDirection *= -1;
     }
     this.setFlipX(this.moveDirection < 0);
+
+    // Initialize fire timer
+    if (this.lastFireTime < 0) this.lastFireTime = time;
 
     // Shoot at helicopter
     const heli = this.gameScene.helicopter;
