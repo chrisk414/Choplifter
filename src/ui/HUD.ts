@@ -63,7 +63,7 @@ export class HUD {
       .setScrollFactor(0).setDepth(10);
 
     // Vertical dividers with beveled look
-    const dividers = [190, 420, 580, 720];
+    const dividers = [190, 400, 610, 720];
     for (const x of dividers) {
       this.scene.add.rectangle(x - 1, HUD_HEIGHT / 2, 1, HUD_HEIGHT - 8, 0x333333)
         .setScrollFactor(0).setDepth(10);
@@ -76,9 +76,9 @@ export class HUD {
     // Recessed panel areas around dials
     const g = this.scene.add.graphics().setScrollFactor(0).setDepth(9.9);
     g.fillStyle(0x111111);
-    g.fillRoundedRect(428, 4, 144, HUD_HEIGHT - 10, 6);
+    g.fillRoundedRect(408, 4, 194, HUD_HEIGHT - 10, 6);
     g.lineStyle(1, 0x333333);
-    g.strokeRoundedRect(428, 4, 144, HUD_HEIGHT - 10, 6);
+    g.strokeRoundedRect(408, 4, 194, HUD_HEIGHT - 10, 6);
   }
 
   private createLabels(): void {
@@ -119,8 +119,8 @@ export class HUD {
     // (created in createDials)
 
     // --- Right section: 1UP score + LOAD/SAFE/LOST ---
-    this.scoreLabel = this.txt(590, 6, '1UP', { ...labelStyle, color: '#ff4444' });
-    this.scoreValue = this.txt(625, 4, '0000000', bigValueStyle);
+    this.scoreLabel = this.txt(620, 6, '1UP', { ...labelStyle, color: '#ff4444' });
+    this.scoreValue = this.txt(650, 4, '0000000', bigValueStyle);
 
     // LOAD
     this.loadLabel = this.txt(730, 6, 'LOAD', { ...labelStyle, color: '#44ff44' });
@@ -173,13 +173,14 @@ export class HUD {
   }
 
   private createDials(): void {
-    // Three arcade-style instrument dials in center section
+    // Four arcade-style instrument dials in center section
     const dialConfigs = [
-      { cx: 456, label: 'SPD', colorStart: 0x22aa22, colorEnd: 0xcc3333 },
-      { cx: 500, label: 'ALT', colorStart: 0x2244cc, colorEnd: 0x22aacc },
-      { cx: 544, label: 'HDG', colorStart: 0xcc8822, colorEnd: 0xcccc22 },
+      { cx: 434, label: 'SPD', colorStart: 0x22aa22, colorEnd: 0xcc3333 },
+      { cx: 478, label: 'ALT', colorStart: 0x2244cc, colorEnd: 0x22aacc },
+      { cx: 522, label: 'HDG', colorStart: 0xcc8822, colorEnd: 0xcccc22 },
+      { cx: 566, label: 'THR', colorStart: 0x2266aa, colorEnd: 0xcc6622 },
     ];
-    const dialRadius = 20;
+    const dialRadius = 18;
 
     for (const cfg of dialConfigs) {
       const cy = HUD_HEIGHT / 2 - 2;
@@ -342,18 +343,21 @@ export class HUD {
     const heli = this.scene.helicopter;
     const body = heli.body as Phaser.Physics.Arcade.Body;
 
+    const speed = Math.sqrt(body.velocity.x * body.velocity.x + body.velocity.y * body.velocity.y);
     const values = [
-      Math.abs(body.velocity.x) / 250,
-      1 - (heli.y / 400),
-      (body.velocity.x + 250) / 500,
+      Math.abs(body.velocity.x) / 250,           // speed
+      1 - (heli.y / 400),                         // altitude
+      (body.velocity.x + 250) / 500,              // heading
+      speed / 320,                                 // throttle (total velocity)
     ];
 
     const dialConfigs = [
-      { cx: 456, colorStart: 0x22aa22, colorEnd: 0xcc3333 },
-      { cx: 500, colorStart: 0x2244cc, colorEnd: 0x22aacc },
-      { cx: 544, colorStart: 0xcc8822, colorEnd: 0xcccc22 },
+      { cx: 434, colorStart: 0x22aa22, colorEnd: 0xcc3333 },
+      { cx: 478, colorStart: 0x2244cc, colorEnd: 0x22aacc },
+      { cx: 522, colorStart: 0xcc8822, colorEnd: 0xcccc22 },
+      { cx: 566, colorStart: 0x2266aa, colorEnd: 0xcc6622 },
     ];
-    const dialRadius = 20;
+    const dialRadius = 18;
 
     for (let i = 0; i < this.dials.length; i++) {
       const cy = HUD_HEIGHT / 2 - 2;
