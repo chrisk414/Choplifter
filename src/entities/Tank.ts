@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   TANK_SPEED, TANK_FIRE_RATE, TANK_BULLET_SPEED,
-  GROUND_Y, TANK_HEIGHT, TANK_WIDTH,
+  GROUND_Y, TANK_HEIGHT, TANK_WIDTH, GAME_WIDTH,
 } from '../constants';
 import type { GameScene } from '../scenes/GameScene';
 
@@ -43,9 +43,12 @@ export class Tank extends Phaser.Physics.Arcade.Sprite {
     // Initialize fire timer
     if (this.lastFireTime < 0) this.lastFireTime = time;
 
-    // Shoot at helicopter
+    // Only fire when on-screen
+    const cam = this.gameScene.cameras.main;
+    const onScreen = this.x > cam.scrollX - 20 && this.x < cam.scrollX + GAME_WIDTH + 20;
+
     const heli = this.gameScene.helicopter;
-    if (heli && !heli.isDead) {
+    if (onScreen && heli && !heli.isDead) {
       const dist = Math.abs(this.x - heli.x);
       if (dist < 400 && heli.y < this.y && time - this.lastFireTime > this.fireRate) {
         this.lastFireTime = time;

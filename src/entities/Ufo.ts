@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   UFO_SPEED, UFO_FIRE_RATE, UFO_HEALTH,
-  UFO_SIZE, WORLD_WIDTH, HUD_HEIGHT, GROUND_Y,
+  UFO_SIZE, WORLD_WIDTH, GAME_WIDTH, HUD_HEIGHT, GROUND_Y,
 } from '../constants';
 import type { GameScene } from '../scenes/GameScene';
 
@@ -55,9 +55,12 @@ export class Ufo extends Phaser.Physics.Arcade.Sprite {
     // Initialize fire timer
     if (this.lastFireTime < 0) this.lastFireTime = time;
 
-    // Shoot spread at helicopter
+    // Only fire when on-screen
+    const cam = this.gameScene.cameras.main;
+    const onScreen = this.x > cam.scrollX - 20 && this.x < cam.scrollX + GAME_WIDTH + 20;
+
     const heli = this.gameScene.helicopter;
-    if (heli && !heli.isDead && time - this.lastFireTime > this.fireRate) {
+    if (onScreen && heli && !heli.isDead && time - this.lastFireTime > this.fireRate) {
       const dist = Math.abs(this.x - heli.x);
       if (dist < 600) {
         this.lastFireTime = time;

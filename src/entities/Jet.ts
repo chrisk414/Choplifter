@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   JET_SPEED, JET_FIRE_RATE, JET_MISSILE_SPEED,
-  JET_WIDTH, WORLD_WIDTH, HUD_HEIGHT, GROUND_Y,
+  JET_WIDTH, WORLD_WIDTH, GAME_WIDTH, HUD_HEIGHT, GROUND_Y,
 } from '../constants';
 import type { GameScene } from '../scenes/GameScene';
 
@@ -43,9 +43,12 @@ export class Jet extends Phaser.Physics.Arcade.Sprite {
       this.lastFireTime = time;
     }
 
-    // Shoot at helicopter
+    // Only fire when on-screen (visible to the player)
+    const cam = this.gameScene.cameras.main;
+    const onScreen = this.x > cam.scrollX - 20 && this.x < cam.scrollX + GAME_WIDTH + 20;
+
     const heli = this.gameScene.helicopter;
-    if (heli && !heli.isDead && time - this.lastFireTime > this.fireRate) {
+    if (onScreen && heli && !heli.isDead && time - this.lastFireTime > this.fireRate) {
       const dist = Math.abs(this.x - heli.x);
       if (dist < 500) {
         this.lastFireTime = time;
