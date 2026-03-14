@@ -9,12 +9,12 @@ export const GROUND_Y = GAME_HEIGHT - 60;
 
 // Home base
 export const BASE_X = 128;
-export const BASE_WIDTH = 180;
+export const BASE_WIDTH = 80;  // 40px * 2x scale
 
 // Barracks positions (4 barracks in enemy territory)
 export const BARRACKS_POSITIONS = [1000, 1700, 2400, 3100];
-export const BARRACKS_WIDTH = 64;
-export const BARRACKS_HEIGHT = 48;
+export const BARRACKS_WIDTH = 64;  // 32px * 2x scale
+export const BARRACKS_HEIGHT = 44; // 22px * 2x scale
 export const BARRACKS_HEALTH = 3;
 export const HOSTAGES_PER_BARRACKS = 16;
 
@@ -24,8 +24,8 @@ export const HELI_DRAG = 200;
 export const HELI_GRAVITY = 300;
 export const HELI_MAX_SPEED_X = 250;
 export const HELI_MAX_SPEED_Y = 200;
-export const HELI_WIDTH = 48;
-export const HELI_HEIGHT = 24;
+export const HELI_WIDTH = 56;   // 28px * 2x scale
+export const HELI_HEIGHT = 32;  // 16px * 2x scale
 export const HELI_MAX_PASSENGERS = 16;
 export const HELI_SAFE_LANDING_SPEED = 100;
 export const HELI_LIVES = 3;
@@ -33,30 +33,30 @@ export const HELI_LIVES = 3;
 // Bullet
 export const BULLET_SPEED = 500;
 export const BULLET_COOLDOWN = 200; // ms
-export const BULLET_SIZE = 4;
+export const BULLET_SIZE = 8;   // 4px * 2x scale
 
 // Hostage
-export const HOSTAGE_WIDTH = 8;
-export const HOSTAGE_HEIGHT = 14;
+export const HOSTAGE_WIDTH = 12;   // 6px * 2x scale
+export const HOSTAGE_HEIGHT = 24;  // 12px * 2x scale
 export const HOSTAGE_SPEED = 30;
 export const HOSTAGE_BOARD_RANGE = 80;
 
 // Tank
-export const TANK_WIDTH = 32;
-export const TANK_HEIGHT = 20;
+export const TANK_WIDTH = 40;   // 20px * 2x scale
+export const TANK_HEIGHT = 24;  // 12px * 2x scale
 export const TANK_SPEED = 30;
 export const TANK_FIRE_RATE = 2500; // ms
 export const TANK_BULLET_SPEED = 200;
 
 // Jet
-export const JET_WIDTH = 40;
-export const JET_HEIGHT = 12;
+export const JET_WIDTH = 48;   // 24px * 2x scale
+export const JET_HEIGHT = 16;  // 8px * 2x scale
 export const JET_SPEED = 200;
 export const JET_FIRE_RATE = 1500; // ms
 export const JET_MISSILE_SPEED = 250;
 
 // UFO
-export const UFO_SIZE = 24;
+export const UFO_SIZE = 32;   // 16px * 2x scale
 export const UFO_SPEED = 120;
 export const UFO_FIRE_RATE = 1200; // ms
 export const UFO_HEALTH = 3;
