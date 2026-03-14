@@ -1,62 +1,58 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, COLOR_GROUND, COLOR_MOUNTAIN, COLOR_HILL } from '../constants';
-import { renderSprite, renderSilhouette } from '../sprites/SpriteRenderer';
-import {
-  HELI_RIGHT_1, HELI_RIGHT_2, HELI_FORWARD_1, HELI_FORWARD_2,
-  HOSTAGE_WALK_1, HOSTAGE_WALK_2, HOSTAGE_WAVE, HOSTAGE_DEAD,
-  BARRACKS_INTACT, BARRACKS_DAMAGED, BARRACKS_DESTROYED,
-  HOME_BASE, TANK_SPRITE, JET_SPRITE, UFO_SPRITE,
-  BULLET_SPRITE, MISSILE_SPRITE,
-  EXPLOSION_1, EXPLOSION_2, EXPLOSION_3, EXPLOSION_4,
-  MOUNTAIN_HEIGHTS, HILL_HEIGHTS,
-} from '../sprites/SpriteData';
+import { renderSilhouette } from '../sprites/SpriteRenderer';
+import { MOUNTAIN_HEIGHTS, HILL_HEIGHTS } from '../sprites/SpriteData';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BootScene' });
   }
 
-  create(): void {
-    // Helicopter textures
-    renderSprite(this, 'heli-right-1', HELI_RIGHT_1);
-    renderSprite(this, 'heli-right-2', HELI_RIGHT_2);
-    renderSprite(this, 'heli-forward-1', HELI_FORWARD_1);
-    renderSprite(this, 'heli-forward-2', HELI_FORWARD_2);
+  preload(): void {
+    const base = 'assets/sprites';
 
-    // Hostage textures
-    renderSprite(this, 'hostage-walk-1', HOSTAGE_WALK_1);
-    renderSprite(this, 'hostage-walk-2', HOSTAGE_WALK_2);
-    renderSprite(this, 'hostage-wave', HOSTAGE_WAVE);
-    renderSprite(this, 'hostage-dead', HOSTAGE_DEAD);
+    // Helicopter
+    this.load.image('heli-right-1', `${base}/heli-right-1.png`);
+    this.load.image('heli-right-2', `${base}/heli-right-2.png`);
+    this.load.image('heli-forward-1', `${base}/heli-forward-1.png`);
+    this.load.image('heli-forward-2', `${base}/heli-forward-2.png`);
 
-    // Barracks textures
-    renderSprite(this, 'barracks-intact', BARRACKS_INTACT);
-    renderSprite(this, 'barracks-damaged', BARRACKS_DAMAGED);
-    renderSprite(this, 'barracks-destroyed', BARRACKS_DESTROYED);
+    // Hostages
+    this.load.image('hostage-walk-1', `${base}/hostage-walk-1.png`);
+    this.load.image('hostage-walk-2', `${base}/hostage-walk-2.png`);
+    this.load.image('hostage-wave', `${base}/hostage-wave.png`);
+    this.load.image('hostage-dead', `${base}/hostage-dead.png`);
+
+    // Barracks
+    this.load.image('barracks-intact', `${base}/barracks-intact.png`);
+    this.load.image('barracks-damaged', `${base}/barracks-damaged.png`);
+    this.load.image('barracks-destroyed', `${base}/barracks-destroyed.png`);
 
     // Home base
-    renderSprite(this, 'base', HOME_BASE);
+    this.load.image('base', `${base}/base.png`);
 
-    // Enemy textures
-    renderSprite(this, 'tank', TANK_SPRITE);
-    renderSprite(this, 'jet', JET_SPRITE);
-    renderSprite(this, 'ufo', UFO_SPRITE);
+    // Enemies
+    this.load.image('tank', `${base}/tank.png`);
+    this.load.image('jet', `${base}/jet.png`);
+    this.load.image('ufo', `${base}/ufo.png`);
 
-    // Projectile textures
-    renderSprite(this, 'bullet', BULLET_SPRITE);
-    renderSprite(this, 'missile', MISSILE_SPRITE);
+    // Projectiles
+    this.load.image('bullet', `${base}/bullet.png`);
+    this.load.image('missile', `${base}/missile.png`);
 
-    // Explosion textures
-    renderSprite(this, 'explosion-1', EXPLOSION_1);
-    renderSprite(this, 'explosion-2', EXPLOSION_2);
-    renderSprite(this, 'explosion-3', EXPLOSION_3);
-    renderSprite(this, 'explosion-4', EXPLOSION_4);
+    // Explosions
+    this.load.image('explosion-1', `${base}/explosion-1.png`);
+    this.load.image('explosion-2', `${base}/explosion-2.png`);
+    this.load.image('explosion-3', `${base}/explosion-3.png`);
+    this.load.image('explosion-4', `${base}/explosion-4.png`);
+  }
 
-    // Background silhouettes
+  create(): void {
+    // Background silhouettes (still procedural - they're large tiling textures)
     renderSilhouette(this, 'mountains', MOUNTAIN_HEIGHTS, GAME_WIDTH, 200, COLOR_MOUNTAIN);
     renderSilhouette(this, 'hills', HILL_HEIGHTS, GAME_WIDTH, 120, COLOR_HILL);
 
-    // Ground texture
+    // Ground texture (procedural - large tiling)
     this.generateGroundTexture();
 
     this.scene.start('TitleScene');
