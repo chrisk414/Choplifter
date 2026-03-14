@@ -1,5 +1,5 @@
 /**
- * Sprite PNG generator - Arcade Choplifter style
+ * Sprite PNG generator - Arcade Choplifter style (close match)
  * Run: node tools/generate-sprites.mjs
  */
 import sharp from 'sharp';
@@ -11,32 +11,40 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, '..', 'public', 'assets', 'sprites');
 mkdirSync(OUT_DIR, { recursive: true });
 
-// Arcade-style color palette
+// Extended arcade palette
 const PALETTE = {
   '.': null,
-  '0': [0x00, 0x00, 0x00, 255],    // black (outlines)
-  '1': [0x88, 0x88, 0x88, 255],    // medium gray (heli body shadow)
-  '2': [0xbb, 0xbb, 0xbb, 255],    // light gray (heli body)
-  '3': [0xdd, 0xdd, 0xdd, 255],    // near-white (heli highlight)
+  '0': [0x00, 0x00, 0x00, 255],    // black
+  '1': [0x88, 0x88, 0x88, 255],    // medium gray
+  '2': [0xcc, 0xcc, 0xcc, 255],    // light gray
+  '3': [0xee, 0xee, 0xee, 255],    // near-white
   '4': [0x44, 0x88, 0xcc, 255],    // cockpit glass
-  '5': [0x88, 0xcc, 0xee, 255],    // cockpit glass highlight
-  '6': [0x33, 0x33, 0x33, 255],    // dark gray (mechanical)
-  '7': [0x55, 0x55, 0x55, 255],    // gray (rotor, metal)
+  '5': [0x88, 0xcc, 0xee, 255],    // cockpit highlight
+  '6': [0x33, 0x33, 0x33, 255],    // dark gray
+  '7': [0x55, 0x55, 0x55, 255],    // gray
   '8': [0xd4, 0xa5, 0x74, 255],    // skin tone
-  '9': [0xee, 0xee, 0xee, 255],    // white (hostage/clouds)
-  'a': [0x8b, 0x69, 0x14, 255],    // brown (barracks)
+  '9': [0xee, 0xee, 0xee, 255],    // white
+  'a': [0x8b, 0x69, 0x14, 255],    // brown
   'b': [0x5a, 0x44, 0x10, 255],    // dark brown
-  'c': [0xcc, 0x33, 0x33, 255],    // red (accents)
-  'd': [0xff, 0xcc, 0x00, 255],    // yellow (bullet)
-  'e': [0xff, 0x88, 0x00, 255],    // orange (explosion)
+  'c': [0xcc, 0x33, 0x33, 255],    // red
+  'd': [0xff, 0xcc, 0x00, 255],    // yellow
+  'e': [0xff, 0x88, 0x00, 255],    // orange
   'f': [0x44, 0x44, 0x44, 255],    // medium-dark gray
-  'g': [0xc8, 0x90, 0x60, 255],    // tan (jet body)
-  'h': [0xa0, 0x70, 0x48, 255],    // dark tan (jet shadow)
+  'g': [0xc8, 0x90, 0x60, 255],    // tan
+  'h': [0xa0, 0x70, 0x48, 255],    // dark tan
   'i': [0xff, 0xff, 0xff, 255],    // pure white
-  'j': [0x66, 0x99, 0xcc, 255],    // steel blue (base)
-  'k': [0x48, 0xa8, 0x30, 255],    // green (grass/hills)
-  'l': [0xdd, 0xee, 0xff, 255],    // cloud shadow
-  'm': [0xcc, 0x88, 0x44, 255],    // copper/warm accent
+  'j': [0x44, 0x77, 0xaa, 255],    // steel blue
+  'k': [0x48, 0xa8, 0x30, 255],    // green
+  'l': [0xcc, 0xdd, 0xee, 255],    // cloud shadow
+  'm': [0xaa, 0xaa, 0xaa, 255],    // light medium gray
+  'n': [0x77, 0x77, 0x77, 255],    // neutral gray
+  'o': [0xdd, 0x55, 0x44, 255],    // bright red
+  'p': [0xbb, 0xbb, 0xcc, 255],    // blue-gray
+  'q': [0x66, 0x88, 0x44, 255],    // olive
+  'r': [0xff, 0x66, 0x44, 255],    // red-orange
+  's': [0x99, 0x99, 0x99, 255],    // silver
+  't': [0x33, 0x55, 0x88, 255],    // dark blue
+  'u': [0xbb, 0xdd, 0xff, 255],    // light blue
 };
 
 function createSprite(pixels, scale = 2) {
@@ -45,7 +53,6 @@ function createSprite(pixels, scale = 2) {
   const w = srcW * scale;
   const h = srcH * scale;
   const buf = Buffer.alloc(w * h * 4, 0);
-
   for (let sy = 0; sy < srcH; sy++) {
     const row = pixels[sy];
     for (let sx = 0; sx < row.length; sx++) {
@@ -54,13 +61,8 @@ function createSprite(pixels, scale = 2) {
       if (!color) continue;
       for (let dy = 0; dy < scale; dy++) {
         for (let dx = 0; dx < scale; dx++) {
-          const px = sx * scale + dx;
-          const py = sy * scale + dy;
-          const off = (py * w + px) * 4;
-          buf[off] = color[0];
-          buf[off + 1] = color[1];
-          buf[off + 2] = color[2];
-          buf[off + 3] = color[3];
+          const off = ((sy * scale + dy) * w + sx * scale + dx) * 4;
+          buf[off] = color[0]; buf[off+1] = color[1]; buf[off+2] = color[2]; buf[off+3] = color[3];
         }
       }
     }
@@ -68,105 +70,110 @@ function createSprite(pixels, scale = 2) {
   return { buf, w, h };
 }
 
-async function saveSprite(name, pixels, scale = 2) {
+async function save(name, pixels, scale = 2) {
   const { buf, w, h } = createSprite(pixels, scale);
-  const path = join(OUT_DIR, `${name}.png`);
-  await sharp(buf, { raw: { width: w, height: h, channels: 4 } })
-    .png()
-    .toFile(path);
+  await sharp(buf, { raw: { width: w, height: h, channels: 4 } }).png().toFile(join(OUT_DIR, `${name}.png`));
   console.log(`  + ${name}.png (${w}x${h})`);
 }
 
 // ============================================================
-// HELICOPTER - White/gray body with red accents (arcade style)
+// HELICOPTER - White/gray body, red skids, more detail
+// 30x18 pixels at 2x = 60x36
 // ============================================================
 const heliRight1 = [
-  '....0677777777777777776760....',  // rotor blade full
-  '.............07...............',
-  '.............07...............',
-  '............0220..............',
-  '.....012222222222220..........',
-  '....0122333333333322200.......',
-  '...01223333333333332221c0....',
-  '...0122345533333322222100....',
-  '...0122345533332222221c0....',
-  '...01223333333332222110c....',
-  '...01222222222222221100.....',
-  '....011122222221110c........',
-  '.....0..077007700..0........',
-  '.......07777777770..........',
-  '.......00000000000..........',
-  '..............................',
+  '.......06n6n6n6n6n6n6n6n6n6n60......',  // rotor blade
+  '................0n0...................',
+  '................0n0...................',
+  '...............02320.................',
+  '........01222233333322220............',
+  '.......0123333333333333220...........',
+  '......012333333333333332220..........',
+  '......01233p3333333333322210.........',
+  '......01234553333333322222100........',
+  '......01234553333332222221c0.........',
+  '......012333333333322222110..........',
+  '......0123333333333222110c..........',
+  '.......01222222222221100............',
+  '........011112222111c0c.............',
+  '........0..0cc00cc00..0.............',
+  '.......0..0cccccccccc0.0............',
+  '..........0c0c0c0c0c0...............',
+  '..........0000000000................',
 ];
 
 const heliRight2 = [
-  '..........06777777760.........',  // rotor short
-  '.............07...............',
-  '.............07...............',
-  '............0220..............',
-  '.....012222222222220..........',
-  '....0122333333333322200.......',
-  '...01223333333333332221c0....',
-  '...0122345533333322222100....',
-  '...0122345533332222221c0....',
-  '...01223333333332222110c....',
-  '...01222222222222221100.....',
-  '....011122222221110c........',
-  '.....0..077007700..0........',
-  '.......07777777770..........',
-  '.......00000000000..........',
-  '..............................',
+  '...........06n6n6n6n6n60.............',  // short rotor
+  '................0n0...................',
+  '................0n0...................',
+  '...............02320.................',
+  '........01222233333322220............',
+  '.......0123333333333333220...........',
+  '......012333333333333332220..........',
+  '......01233p3333333333322210.........',
+  '......01234553333333322222100........',
+  '......01234553333332222221c0.........',
+  '......012333333333322222110..........',
+  '......0123333333333222110c..........',
+  '.......01222222222221100............',
+  '........011112222111c0c.............',
+  '........0..0cc00cc00..0.............',
+  '.......0..0cccccccccc0.0............',
+  '..........0c0c0c0c0c0...............',
+  '..........0000000000................',
 ];
 
 const heliForward1 = [
-  '.067777777777777777760.',  // rotor full
-  '..........07............',
-  '..........07............',
-  '.........0220...........',
-  '.....0122222222210......',
-  '....012233333322210.....',
-  '...01223333333322210....',
-  '...01223455543322210....',
-  '...01223455543222210....',
-  '...01223333333222210....',
-  '...01222222222222210....',
-  '....0122222222221c0.....',
-  '.....0077000077c0.......',
-  '....077777700777770.....',
-  '....000000000000000.....',
-  '........................',
+  '..06n6n6n6n6n6n6n6n6n6n60..',  // rotor full
+  '............0n0..............',
+  '............0n0..............',
+  '...........02320.............',
+  '.......012233333221c0.......',
+  '......0123333333332210......',
+  '.....012333333333332210.....',
+  '.....012334555433332210.....',
+  '.....012334555433222210.....',
+  '.....012333333333222210.....',
+  '.....012233333332222210.....',
+  '......0122222222222100......',
+  '.......0cc00....00cc0.......',
+  '......0cccccc00cccccc0......',
+  '......0c0c0c0..0c0c0c0.....',
+  '......000000....000000......',
 ];
 
 const heliForward2 = [
-  '.......0677777760........',  // rotor short
-  '..........07............',
-  '..........07............',
-  '.........0220...........',
-  '.....0122222222210......',
-  '....012233333322210.....',
-  '...01223333333322210....',
-  '...01223455543322210....',
-  '...01223455543222210....',
-  '...01223333333222210....',
-  '...01222222222222210....',
-  '....0122222222221c0.....',
-  '.....0077000077c0.......',
-  '....077777700777770.....',
-  '....000000000000000.....',
-  '........................',
+  '........06n6n6n6n6n60........',  // short rotor
+  '............0n0..............',
+  '............0n0..............',
+  '...........02320.............',
+  '.......012233333221c0.......',
+  '......0123333333332210......',
+  '.....012333333333332210.....',
+  '.....012334555433332210.....',
+  '.....012334555433222210.....',
+  '.....012333333333222210.....',
+  '.....012233333332222210.....',
+  '......0122222222222100......',
+  '.......0cc00....00cc0.......',
+  '......0cccccc00cccccc0......',
+  '......0c0c0c0..0c0c0c0.....',
+  '......000000....000000......',
 ];
 
 // ============================================================
-// HOSTAGE - Small white figure
+// HOSTAGE - slightly taller, more visible on desert
+// 6x14 at 2x = 12x28
 // ============================================================
 const hostageWalk1 = [
   '.0880.',
   '.0880.',
-  '..99..',
-  '..99..',
-  '.0990.',
-  '..99..',
-  '..99..',
+  '.0880.',
+  '..ii..',
+  '..ii..',
+  '.0ii0.',
+  '..ii..',
+  '..ii..',
+  '..ii..',
   '..00..',
   '.0..0.',
   '.0..0.',
@@ -177,11 +184,13 @@ const hostageWalk1 = [
 const hostageWalk2 = [
   '.0880.',
   '.0880.',
-  '..99..',
-  '..99..',
-  '.0990.',
-  '..99..',
-  '..99..',
+  '.0880.',
+  '..ii..',
+  '..ii..',
+  '.0ii0.',
+  '..ii..',
+  '..ii..',
+  '..ii..',
   '..00..',
   '..00..',
   '..00..',
@@ -192,11 +201,13 @@ const hostageWalk2 = [
 const hostageWave = [
   '.0880.',
   '.0880.',
-  '..998.',
-  '..998.',
-  '.0990.',
-  '..99..',
-  '..99..',
+  '.0880.',
+  '..ii8.',
+  '..ii8.',
+  '.0ii0.',
+  '..ii..',
+  '..ii..',
+  '..ii..',
   '..00..',
   '.0..0.',
   '.0..0.',
@@ -205,18 +216,18 @@ const hostageWave = [
 ];
 
 const hostageDead = [
-  '..9779..',
-  '.977779.',
-  '97799779',
-  '77777777',
-  '97799779',
-  '.977779.',
-  '..9779..',
-  '...77...',
+  '...ii...',
+  '..9ii9..',
+  '.9iiii9.',
+  '9i9ii9i9',
+  '.9iiii9.',
+  '..9ii9..',
+  '...99...',
+  '........',
 ];
 
 // ============================================================
-// BARRACKS - Brown building with peaked roof
+// BARRACKS - more detailed
 // ============================================================
 const barracksIntact = [
   '...............0aa0.............',
@@ -279,84 +290,86 @@ const barracksDestroyed = [
   '................................',
   '................................',
   '................................',
-  '................................',
-  '................................',
-  '..........0.......0.............',
-  '.........0a0.0bb.0a0............',
-  '........0aab0bba0aab0...........',
-  '.......0aabbbbbbaaabb0..........',
-  '......0aabbb0aabbbbabb0.........',
-  '.....0aaabbbaaabbbbaaab0........',
-  '....0aaabbbbaaabbbaaaabb0.......',
-  '...0aaaaabbbaaabbbaaaaabb0......',
-  '..00000000000000000000000000....',
+  '..........77...77...............',
+  '.........7667.766...............',
+  '........0a770bb70a0.............',
+  '.......0a6b0bba06ab0............',
+  '......0aab7bbbb7aab0...........',
+  '.....0aabbbbbbbaaabb0..........',
+  '....0aabbb06abbbbaabb0.........',
+  '...0aaabbbbaaabbbaaaab0........',
+  '..0aaabbbbbaaabbbaaaabb0.......',
+  '.0aaaaaabbbaaabbbaaaaabb0......',
+  '000000000000000000000000000....',
   '................................',
 ];
 
 // ============================================================
-// HOME BASE - Blue/steel building with helipad
+// HOME BASE
 // ============================================================
 const homeBase = [
-  '....0000000000000000000000................',
-  '...0jjjjjjjjjjjjjjjjjjjj40..............',
-  '..04jjjjjjjjjjjjjjjjjjjj440.............',
-  '.04j55jj55jj55jj55jj55jj550.............',
-  '.04j55jj55jj55jj55jj55jj550.............',
-  '.04j00jj00jj00jj00jj00jj000.............',
-  '.04jjjjjjjjjjjjjjjjjjjjjjc0.............',
-  '.04jjjjjjjjjjjjjjjjjjjjjjc0...0770......',
-  '.04jjjjjjjjjjjjjjjjjjjjjjc0..07007.....',
-  '.04j00jj00jj00jj00jj00jj000..07007.....',
-  '.04j55jj55jj55jj55jj55jj550..07007.....',
-  '.04j55jj55jj55jj55jj55jj550..07007.....',
-  '.04j00jj00jj00jj00jj00jj000..07007.....',
-  '.04jjjjjj0bb0jjjjjjjjjjjj0...07007.....',
-  '.04jjjjjj0bb0jjjjjjjjjjjj0...07007.....',
-  '.04jjjjjj0bb0jjjjjjjjjjjj0...07007.....',
-  '.04jjjjjj0bb0jjjjjjjjjjjj0..077770.....',
-  '.04jjjjjj0bb0jjjjjjjjjjjj0..077770.....',
-  '.00000000000000000000000000.07777777770..',
-  '................................0ddd0.....',
-  '................................0d0d0.....',
-  '................................0ddd0.....',
-  '................................00000.....',
-  '.........................................',
+  '...000000000000000000000000...................',
+  '..0jjjjjjjjjjjjjjjjjjjjjj40.................',
+  '.04jjjjjjjjjjjjjjjjjjjjjj440................',
+  '.04j55jj55jj55jj55jj55jj550.................',
+  '.04j55jj55jj55jj55jj55jj550.................',
+  '.04j00jj00jj00jj00jj00jj000.................',
+  '.04jjjjjjjjjjjjjjjjjjjjjjc0.................',
+  '.04jjjjjjjjjjjjjjjjjjjjjjc0....077700.......',
+  '.04jjjjjjjjjjjjjjjjjjjjjjc0...07nn070......',
+  '.04j00jj00jj00jj00jj00jj000...07nn070......',
+  '.04j55jj55jj55jj55jj55jj550...07nn070......',
+  '.04j55jj55jj55jj55jj55jj550...07nn070......',
+  '.04j00jj00jj00jj00jj00jj000...07nn070......',
+  '.04jjjjjj0bb0jjjjjjjjjjjj0....07nn070......',
+  '.04jjjjjj0bb0jjjjjjjjjjjj0....07nn070......',
+  '.04jjjjjj0bb0jjjjjjjjjjjj0....07nn070......',
+  '.04jjjjjj0bb0jjjjjjjjjjjj0...0777777770....',
+  '.04jjjjjj0bb0jjjjjjjjjjjj0...0nnnnnnn70....',
+  '.00000000000000000000000000...077777777770...',
+  '...........00000..............0n0ddd0n70....',
+  '...........0bbb0..............0n0d0d0n70....',
+  '...........0bbb0..............0n0ddd0n70....',
+  '...........00000..............07777777770....',
+  '..............................................',
 ];
 
 // ============================================================
-// TANK - Dark military gray/green
+// TANK - more detailed treads
 // ============================================================
 const tankSprite = [
-  '....................',
-  '..........077.......',
-  '..........077.......',
-  '.......07777770.....',
-  '.......07f1f770.....',
-  '.......07777770.....',
-  '....0777777777770...',
-  '...0771777777177700.',
-  '...07777777777777700',
-  '..077f07f07f07f07700',
-  '..077777777777777700',
-  '..000000000000000000',
+  '........................',
+  '............0770........',
+  '............0770........',
+  '.........077777770......',
+  '.........07fn1f770......',
+  '.........077777770......',
+  '......0777777777777700..',
+  '.....077s7777777s77700..',
+  '.....077777777777777700.',
+  '....077f07f07f07f077700.',
+  '....0f7f7f7f7f7f7f7f00.',
+  '....0000000000000000000.',
 ];
 
 // ============================================================
-// JET - Tan/brown fighter (arcade style)
+// JET - tan/brown with more wing detail
 // ============================================================
 const jetSprite = [
-  '...............00gg.........',
-  '..........00ggggggg0........',
-  '.....00gggggggggggggg0......',
-  '0000gggggggghhggggggggg0...',
-  '0000gggggggghhggggggggg0...',
-  '.....00gggggggggggggg0......',
-  '..........00ggggggg0........',
-  '...............00gg.........',
+  '..................00hh...........',
+  '.............00hhhhhhhh0.........',
+  '........00hhhggggggggggg0.......',
+  '....00hhgggggggggggggggggg0.....',
+  '0000gggggggggg00ggggggggggg0....',
+  '0000gggggggggg00ggggggggggg0....',
+  '....00hhgggggggggggggggggg0.....',
+  '........00hhhggggggggggg0.......',
+  '.............00hhhhhhhh0.........',
+  '..................00hh...........',
 ];
 
 // ============================================================
-// UFO - Purple/magenta saucer with lights
+// UFO
 // ============================================================
 const ufoSprite = [
   '......0cc0......',
@@ -365,8 +378,8 @@ const ufoSprite = [
   '...0cccccccc0...',
   '.00cccccccccc00.',
   '0f7ccd7ccd7ccf70',
-  '.00f7f7777f7f00.',
-  '...0f7f777f70...',
+  '.00f7f7n77f7f00.',
+  '...0f7f7n7f70...',
   '....00000000....',
   '................',
 ];
@@ -389,14 +402,14 @@ const missileSprite = [
 ];
 
 // ============================================================
-// EXPLOSIONS - orange/yellow/white
+// EXPLOSIONS
 // ============================================================
 const explosion1 = [
   '........',
   '...de...',
   '..deed..',
-  '.deddde.',
-  '.deddde.',
+  '.deidde.',
+  '.deidde.',
   '..deed..',
   '...de...',
   '........',
@@ -407,10 +420,10 @@ const explosion2 = [
   '....eee.....',
   '...eddde....',
   '..eddddde...',
-  '.eddd99dde..',
-  '.edd9999de..',
-  '.edd9999de..',
-  '.eddd99dde..',
+  '.edddiidde..',
+  '.eddiiidde..',
+  '.eddiiidde..',
+  '.edddiidde...',
   '..eddddde...',
   '...eddde....',
   '....eee.....',
@@ -422,13 +435,13 @@ const explosion3 = [
   '.....7eee7......',
   '....7eddde7.....',
   '...eeddddde7....',
-  '..eeddddddde7...',
-  '.eeddd99dddde...',
-  '.eddd9999ddde...',
-  '.eddd9i99ddde...',
-  '.eddd9999ddde...',
-  '.eeddd99dddde...',
-  '..eeddddddee7...',
+  '..eeddddddde....',
+  '.eedddiidddde...',
+  '.edddiiiddde....',
+  '.edddiiiddde....',
+  '.edddiiiddde....',
+  '.eedddiidddde...',
+  '..eeddddddee....',
   '...eedddddee....',
   '....7eedde7.....',
   '.....77ee7......',
@@ -460,123 +473,147 @@ const explosion4 = [
 ];
 
 // ============================================================
-// CLOUDS (3 sizes for variety)
+// CLOUDS - 5 varieties, more fluffy/detailed
 // ============================================================
-const cloudSmall = [
-  '......9999......',
-  '....99llll99....',
-  '..99lllllll999..',
-  '.9llllllllllll9.',
-  '9lllllllllllll99',
-  '9999999999999999',
+const cloud1 = [
+  '..........iiii..............',
+  '........iilllii.............',
+  '......iillllllii............',
+  '....iillllllllliii..........',
+  '..iilllliiillllllli.........',
+  '.illlliiilllllllllli........',
+  'illllllllllllllllllli.......',
+  'iiiiiiiiiiiiiiiiiiiii.......',
 ];
 
-const cloudMedium = [
-  '..........9999..........',
-  '.......999llll99........',
-  '....999llllllll999......',
-  '..99lllllllllllllll9....',
-  '.9llll999llllllllll99...',
-  '9llll9lllllllllllllll9..',
-  '9lllllllllllllllllllll99',
-  '999999999999999999999999',
+const cloud2 = [
+  '..............iiii..................',
+  '...........iiilllii................',
+  '.........iillllllliii..............',
+  '......iiillllllllllllii............',
+  '....iilllllliiilllllllli...........',
+  '..iilllllliilllllllllllli..........',
+  '.illllllllllllllllllllllli.........',
+  'illllllllllllllllllllllllli........',
+  'iiiiiiiiiiiiiiiiiiiiiiiiii.........',
 ];
 
-const cloudLarge = [
-  '...........99999....................',
-  '.........99lllll99.................',
-  '......999lllllllll99..............',
-  '....99lllllllllllllll9............',
-  '..99llllll999lllllllll99..........',
-  '.9lllllll9lllllllllllllll99.......',
-  '.9lllllllllllllllll99lllll999.....',
-  '9llllllllllllllllll9lllllllll99...',
-  '9lllllllllllllllllllllllllllll99..',
-  '9llllllllllllllllllllllllllllll9..',
-  '.999999999999999999999999999999...',
+const cloud3 = [
+  '...........iiii....................',
+  '.........iiillli...................',
+  '.......iillllllii.................',
+  '.....iillllllllliii...............',
+  '...iillllllllllllllii.............',
+  '..illlliiillllllllllli............',
+  '.illliiillllllliiilllii...........',
+  'illllllllllllliillllllii..........',
+  'illllllllllllllllllllllli.........',
+  'illlllllllllllllllllllllli........',
+  '.iiiiiiiiiiiiiiiiiiiiiiiii........',
+];
+
+const cloud4 = [
+  '.......iiii.....',
+  '.....iilllii....',
+  '...iilllllllii..',
+  '..illllllllllii.',
+  '.illllllllllllli',
+  'illlllllllllllll',
+  'iiiiiiiiiiiiiii.',
+];
+
+const cloud5 = [
+  '...iiii...iiii.......',
+  '..illlii.iillli......',
+  '.illllliilllllli.....',
+  'illllllllllllllli....',
+  'illlllllllllllllli...',
+  '.iiiiiiiiiiiiiiiii...',
 ];
 
 // ============================================================
-// ROCKS for desert ground (3 variants)
+// ROCKS - more natural shapes, 4 variants
 // ============================================================
-const rockSmall = [
+const rock1 = [
   '..00..',
-  '.0aa0.',
+  '.0ba0.',
   '0abba0',
   '.0000.',
 ];
 
-const rockMedium = [
-  '...000...',
-  '..0aaa0..',
-  '.0aabba0.',
-  '.0abbbba.',
-  '0aabbba0.',
-  '.000000..',
+const rock2 = [
+  '...000....',
+  '..0aab0...',
+  '.0aabba0..',
+  '.0abbbba0.',
+  '0aabbba0..',
+  '.000000...',
 ];
 
-const rockLarge = [
-  '....0000....',
-  '..00aaaa0...',
-  '.0aaabbba0..',
-  '0aabbbbbba0.',
-  '0abbbbaabba0',
-  '.0aabbbbba0.',
-  '..00000000..',
+const rock3 = [
+  '.....0000.....',
+  '...00aaab0....',
+  '..0aaabbba0...',
+  '.0aabbbbbba0..',
+  '0aabbbbabbba0.',
+  '.0aabbbbba0...',
+  '..000000000...',
+];
+
+const rock4 = [
+  '..00..',
+  '.0ab0.',
+  '0abba0',
+  '0abba0',
+  '.0000.',
 ];
 
 // ============================================================
-// GENERATE ALL SPRITES
+// GENERATE
 // ============================================================
 async function main() {
   console.log('Generating arcade-style sprite PNGs...\n');
 
-  // Helicopter (4 frames)
-  await saveSprite('heli-right-1', heliRight1);
-  await saveSprite('heli-right-2', heliRight2);
-  await saveSprite('heli-forward-1', heliForward1);
-  await saveSprite('heli-forward-2', heliForward2);
+  await save('heli-right-1', heliRight1);
+  await save('heli-right-2', heliRight2);
+  await save('heli-forward-1', heliForward1);
+  await save('heli-forward-2', heliForward2);
 
-  // Hostages
-  await saveSprite('hostage-walk-1', hostageWalk1);
-  await saveSprite('hostage-walk-2', hostageWalk2);
-  await saveSprite('hostage-wave', hostageWave);
-  await saveSprite('hostage-dead', hostageDead);
+  await save('hostage-walk-1', hostageWalk1);
+  await save('hostage-walk-2', hostageWalk2);
+  await save('hostage-wave', hostageWave);
+  await save('hostage-dead', hostageDead);
 
-  // Barracks (3 states)
-  await saveSprite('barracks-intact', barracksIntact);
-  await saveSprite('barracks-damaged', barracksDamaged);
-  await saveSprite('barracks-destroyed', barracksDestroyed);
+  await save('barracks-intact', barracksIntact);
+  await save('barracks-damaged', barracksDamaged);
+  await save('barracks-destroyed', barracksDestroyed);
 
-  // Home base
-  await saveSprite('base', homeBase);
+  await save('base', homeBase);
 
-  // Enemies
-  await saveSprite('tank', tankSprite);
-  await saveSprite('jet', jetSprite);
-  await saveSprite('ufo', ufoSprite);
+  await save('tank', tankSprite);
+  await save('jet', jetSprite);
+  await save('ufo', ufoSprite);
 
-  // Projectiles
-  await saveSprite('bullet', bulletSprite);
-  await saveSprite('missile', missileSprite);
+  await save('bullet', bulletSprite);
+  await save('missile', missileSprite);
 
-  // Explosions (4 frames)
-  await saveSprite('explosion-1', explosion1);
-  await saveSprite('explosion-2', explosion2);
-  await saveSprite('explosion-3', explosion3);
-  await saveSprite('explosion-4', explosion4);
+  await save('explosion-1', explosion1);
+  await save('explosion-2', explosion2);
+  await save('explosion-3', explosion3);
+  await save('explosion-4', explosion4);
 
-  // Clouds (3 sizes)
-  await saveSprite('cloud-small', cloudSmall);
-  await saveSprite('cloud-medium', cloudMedium);
-  await saveSprite('cloud-large', cloudLarge);
+  await save('cloud-1', cloud1);
+  await save('cloud-2', cloud2);
+  await save('cloud-3', cloud3);
+  await save('cloud-4', cloud4);
+  await save('cloud-5', cloud5);
 
-  // Rocks (3 sizes)
-  await saveSprite('rock-small', rockSmall);
-  await saveSprite('rock-medium', rockMedium);
-  await saveSprite('rock-large', rockLarge);
+  await save('rock-1', rock1);
+  await save('rock-2', rock2);
+  await save('rock-3', rock3);
+  await save('rock-4', rock4);
 
-  console.log(`\nDone! Sprites generated in public/assets/sprites/`);
+  console.log('\nDone!');
 }
 
 main().catch(console.error);

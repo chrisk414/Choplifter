@@ -49,14 +49,17 @@ export class BootScene extends Phaser.Scene {
     this.load.image('explosion-4', `${base}/explosion-4.png`);
 
     // Clouds
-    this.load.image('cloud-small', `${base}/cloud-small.png`);
-    this.load.image('cloud-medium', `${base}/cloud-medium.png`);
-    this.load.image('cloud-large', `${base}/cloud-large.png`);
+    this.load.image('cloud-1', `${base}/cloud-1.png`);
+    this.load.image('cloud-2', `${base}/cloud-2.png`);
+    this.load.image('cloud-3', `${base}/cloud-3.png`);
+    this.load.image('cloud-4', `${base}/cloud-4.png`);
+    this.load.image('cloud-5', `${base}/cloud-5.png`);
 
     // Rocks
-    this.load.image('rock-small', `${base}/rock-small.png`);
-    this.load.image('rock-medium', `${base}/rock-medium.png`);
-    this.load.image('rock-large', `${base}/rock-large.png`);
+    this.load.image('rock-1', `${base}/rock-1.png`);
+    this.load.image('rock-2', `${base}/rock-2.png`);
+    this.load.image('rock-3', `${base}/rock-3.png`);
+    this.load.image('rock-4', `${base}/rock-4.png`);
   }
 
   create(): void {

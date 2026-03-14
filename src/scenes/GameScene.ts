@@ -135,7 +135,7 @@ export class GameScene extends Phaser.Scene {
 
   private createClouds(): void {
     this.clouds = [];
-    const cloudTextures = ['cloud-small', 'cloud-medium', 'cloud-large'];
+    const cloudTextures = ['cloud-1', 'cloud-2', 'cloud-3', 'cloud-4', 'cloud-5'];
 
     // Place clouds across the world
     for (let x = 100; x < WORLD_WIDTH; x += 150 + Math.random() * 300) {
@@ -150,7 +150,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createRocks(): void {
-    const rockTextures = ['rock-small', 'rock-medium', 'rock-large'];
+    const rockTextures = ['rock-1', 'rock-2', 'rock-3', 'rock-4'];
 
     for (let x = 300; x < WORLD_WIDTH; x += 60 + Math.random() * 200) {
       const tex = rockTextures[Math.floor(Math.random() * rockTextures.length)];
