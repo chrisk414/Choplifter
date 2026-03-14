@@ -7,6 +7,9 @@ import {
 } from '../constants';
 import type { GameScene } from '../scenes/GameScene';
 
+const DOUBLE_TAP_MS = 250; // max time between taps to count as double-tap
+const MAX_TILT_DEG = 15;   // max tilt angle in degrees
+
 export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   facing: Facing = Facing.RIGHT;
   passengers = 0;
@@ -19,6 +22,12 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private fireKey!: Phaser.Input.Keyboard.Key;
   private gameScene: GameScene;
+
+  // Double-tap tracking
+  private lastLeftTapTime = 0;
+  private lastRightTapTime = 0;
+  private leftWasDown = false;
+  private rightWasDown = false;
 
   constructor(scene: GameScene, x: number, y: number) {
     super(scene, x, y, 'heli-right-1');
@@ -66,7 +75,10 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    // Movement
+    // Detect double-tap for facing changes
+    this.handleDoubleTap(time);
+
+    // Movement — left/right accelerates without changing facing
     if (this.cursors.up.isDown) {
       body.setAccelerationY(-HELI_ACCEL * 1.5);
       body.setGravityY(HELI_GRAVITY);
@@ -80,11 +92,9 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
 
     if (this.cursors.left.isDown) {
       body.setAccelerationX(-HELI_ACCEL);
-      this.facing = Facing.LEFT;
       this.isLanded = false;
     } else if (this.cursors.right.isDown) {
       body.setAccelerationX(HELI_ACCEL);
-      this.facing = Facing.RIGHT;
       this.isLanded = false;
     } else {
       body.setAccelerationX(0);
@@ -97,11 +107,57 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     // Update texture based on facing and rotor frame
     this.updateTexture();
 
+    // Tilt based on horizontal velocity (not when forward-facing or landed)
+    this.updateTilt(body);
+
     // Shooting
     if (this.fireKey.isDown && time - this.lastFireTime > BULLET_COOLDOWN) {
       this.lastFireTime = time;
       this.shoot();
     }
+  }
+
+  private handleDoubleTap(time: number): void {
+    const leftDown = this.cursors.left.isDown;
+    const rightDown = this.cursors.right.isDown;
+
+    // Detect fresh key press (was up, now down)
+    if (leftDown && !this.leftWasDown) {
+      if (time - this.lastLeftTapTime < DOUBLE_TAP_MS) {
+        this.facing = Facing.LEFT;
+      }
+      this.lastLeftTapTime = time;
+    }
+
+    if (rightDown && !this.rightWasDown) {
+      if (time - this.lastRightTapTime < DOUBLE_TAP_MS) {
+        this.facing = Facing.RIGHT;
+      }
+      this.lastRightTapTime = time;
+    }
+
+    this.leftWasDown = leftDown;
+    this.rightWasDown = rightDown;
+  }
+
+  private updateTilt(body: Phaser.Physics.Arcade.Body): void {
+    if (this.facing === Facing.FORWARD || this.isLanded) {
+      // No tilt when facing forward or landed
+      this.setAngle(0);
+      return;
+    }
+
+    // Tilt proportional to horizontal velocity
+    // Positive vx (moving right) → tilt nose down (positive angle when facing right)
+    const vxNorm = body.velocity.x / HELI_MAX_SPEED_X; // -1 to 1
+    let tiltDeg = vxNorm * MAX_TILT_DEG;
+
+    // If facing left, the sprite is flipped, so invert tilt direction
+    if (this.facing === Facing.LEFT) {
+      tiltDeg = -tiltDeg;
+    }
+
+    this.setAngle(tiltDeg);
   }
 
   private updateTexture(): void {
@@ -164,5 +220,6 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     this.facing = Facing.RIGHT;
     this.isLanded = false;
     this.passengers = 0;
+    this.setAngle(0);
   }
 }
