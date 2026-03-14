@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import {
   GAME_WIDTH, HUD_HEIGHT, FUEL_MAX,
-  COLOR_HUD_BG, COLOR_HUD_BORDER,
 } from '../constants';
 import type { GameScene } from '../scenes/GameScene';
 
@@ -29,8 +28,14 @@ export class HUD {
   private fuelBarBg!: Phaser.GameObjects.Rectangle;
   private fuelBarFill!: Phaser.GameObjects.Rectangle;
 
+  // Fuel tick marks
+  private fuelTickGraphics!: Phaser.GameObjects.Graphics;
+
   // Instrument dials (decorative)
   private dials: Phaser.GameObjects.Graphics[] = [];
+
+  // Dial labels
+  private dialLabels: Phaser.GameObjects.Text[] = [];
 
   // Message overlay
   private messageText!: Phaser.GameObjects.Text;
@@ -45,20 +50,35 @@ export class HUD {
   }
 
   private createPanel(): void {
-    // Dark instrument panel background
-    const bg = this.scene.add.rectangle(GAME_WIDTH / 2, HUD_HEIGHT / 2, GAME_WIDTH, HUD_HEIGHT, COLOR_HUD_BG)
+    // Dark instrument panel background with subtle gradient effect
+    this.scene.add.rectangle(GAME_WIDTH / 2, HUD_HEIGHT / 2, GAME_WIDTH, HUD_HEIGHT, 0x1a1a1a)
       .setScrollFactor(0).setDepth(10);
 
-    // Bottom border line
-    this.scene.add.rectangle(GAME_WIDTH / 2, HUD_HEIGHT - 1, GAME_WIDTH, 2, COLOR_HUD_BORDER)
+    // Top highlight line (subtle metallic look)
+    this.scene.add.rectangle(GAME_WIDTH / 2, 1, GAME_WIDTH, 2, 0x333333)
       .setScrollFactor(0).setDepth(10);
 
-    // Vertical dividers
+    // Bottom border line (brighter for panel edge)
+    this.scene.add.rectangle(GAME_WIDTH / 2, HUD_HEIGHT - 1, GAME_WIDTH, 3, 0x555555)
+      .setScrollFactor(0).setDepth(10);
+
+    // Vertical dividers with beveled look
     const dividers = [190, 420, 580, 720];
     for (const x of dividers) {
-      this.scene.add.rectangle(x, HUD_HEIGHT / 2, 2, HUD_HEIGHT - 8, COLOR_HUD_BORDER)
+      this.scene.add.rectangle(x - 1, HUD_HEIGHT / 2, 1, HUD_HEIGHT - 8, 0x333333)
+        .setScrollFactor(0).setDepth(10);
+      this.scene.add.rectangle(x, HUD_HEIGHT / 2, 1, HUD_HEIGHT - 8, 0x555555)
+        .setScrollFactor(0).setDepth(10);
+      this.scene.add.rectangle(x + 1, HUD_HEIGHT / 2, 1, HUD_HEIGHT - 8, 0x333333)
         .setScrollFactor(0).setDepth(10);
     }
+
+    // Recessed panel areas around dials
+    const g = this.scene.add.graphics().setScrollFactor(0).setDepth(9.9);
+    g.fillStyle(0x111111);
+    g.fillRoundedRect(428, 4, 144, HUD_HEIGHT - 10, 6);
+    g.lineStyle(1, 0x333333);
+    g.strokeRoundedRect(428, 4, 144, HUD_HEIGHT - 10, 6);
   }
 
   private createLabels(): void {
@@ -93,13 +113,13 @@ export class HUD {
     this.livesValue = this.txt(120, 42, '03', { ...valueStyle, fontSize: '16px' });
 
     // --- Middle-left: FUEL gauge ---
-    this.fuelLabel = this.txt(200, 8, 'FUEL', labelStyle);
+    this.fuelLabel = this.txt(200, 8, 'FUEL', { ...labelStyle, color: '#88ccff' });
 
     // --- Center: Instrument dials (decorative) ---
     // (created in createDials)
 
     // --- Right section: 1UP score + LOAD/SAFE/LOST ---
-    this.scoreLabel = this.txt(590, 6, '1UP', labelStyle);
+    this.scoreLabel = this.txt(590, 6, '1UP', { ...labelStyle, color: '#ff4444' });
     this.scoreValue = this.txt(625, 4, '0000000', bigValueStyle);
 
     // LOAD
@@ -117,54 +137,147 @@ export class HUD {
 
   private createFuelGauge(): void {
     const x = 200;
-    const y = 32;
-    const w = 180;
-    const h = 16;
+    const y = 28;
+    const w = 200;
+    const h = 18;
+
+    // Border frame (beveled)
+    this.scene.add.rectangle(x + w / 2, y + h / 2, w + 4, h + 4, 0x555555)
+      .setScrollFactor(0).setDepth(9.9);
+    this.scene.add.rectangle(x + w / 2, y + h / 2, w + 2, h + 2, 0x333333)
+      .setScrollFactor(0).setDepth(9.95);
 
     // Background
     this.fuelBarBg = this.scene.add.rectangle(x + w / 2, y + h / 2, w, h, 0x000000)
       .setScrollFactor(0).setDepth(10);
-    this.scene.add.rectangle(x + w / 2, y + h / 2, w + 2, h + 2, COLOR_HUD_BORDER)
-      .setScrollFactor(0).setDepth(9.9);
 
-    // Fill (starts full, red on left, blue on right)
+    // Fill bar
     this.fuelBarFill = this.scene.add.rectangle(x + 1, y + 1, w - 2, h - 2, 0x4488ff)
       .setOrigin(0, 0).setScrollFactor(0).setDepth(10.1);
 
-    // Red danger zone marker on left side
-    this.scene.add.rectangle(x + 1, y + 1, 40, h - 2, 0xcc3333)
+    // Red danger zone on left
+    this.scene.add.rectangle(x + 1, y + 1, 44, h - 2, 0xcc3333)
       .setOrigin(0, 0).setScrollFactor(0).setDepth(10.05);
+
+    // Tick marks on fuel gauge
+    this.fuelTickGraphics = this.scene.add.graphics().setScrollFactor(0).setDepth(10.15);
+    this.fuelTickGraphics.lineStyle(1, 0x000000, 0.5);
+    for (let i = 1; i < 10; i++) {
+      const tx = x + (w / 10) * i;
+      this.fuelTickGraphics.lineBetween(tx, y + 1, tx, y + h - 1);
+    }
+
+    // "E" and "F" labels
+    this.txt(x + 2, y + h + 2, 'E', { fontSize: '9px', fontFamily: 'monospace', color: '#cc3333' });
+    this.txt(x + w - 8, y + h + 2, 'F', { fontSize: '9px', fontFamily: 'monospace', color: '#4488ff' });
   }
 
   private createDials(): void {
-    // Decorative instrument dials in center section
-    const dialPositions = [470, 520, 560];
-    const dialRadius = 18;
+    // Three arcade-style instrument dials in center section
+    const dialConfigs = [
+      { cx: 456, label: 'SPD', colorStart: 0x22aa22, colorEnd: 0xcc3333 },
+      { cx: 500, label: 'ALT', colorStart: 0x2244cc, colorEnd: 0x22aacc },
+      { cx: 544, label: 'HDG', colorStart: 0xcc8822, colorEnd: 0xcccc22 },
+    ];
+    const dialRadius = 20;
 
-    for (const cx of dialPositions) {
-      const cy = HUD_HEIGHT / 2;
+    for (const cfg of dialConfigs) {
+      const cy = HUD_HEIGHT / 2 - 2;
 
-      // Dial background circle
       const g = this.scene.add.graphics().setScrollFactor(0).setDepth(10);
-      g.fillStyle(0x111111);
-      g.fillCircle(cx, cy, dialRadius);
-      g.lineStyle(2, COLOR_HUD_BORDER);
-      g.strokeCircle(cx, cy, dialRadius);
 
-      // Tick marks
-      g.lineStyle(1, 0x666666);
-      for (let angle = -140; angle <= 140; angle += 35) {
-        const rad = (angle * Math.PI) / 180;
-        const inner = dialRadius - 4;
-        const outer = dialRadius - 1;
-        g.lineBetween(
-          cx + Math.cos(rad) * inner, cy + Math.sin(rad) * inner,
-          cx + Math.cos(rad) * outer, cy + Math.sin(rad) * outer,
-        );
-      }
+      // Draw the initial dial
+      this.drawDial(g, cfg.cx, cy, dialRadius, 0, cfg.colorStart, cfg.colorEnd);
 
       this.dials.push(g);
+
+      // Dial label below
+      this.dialLabels.push(
+        this.txt(cfg.cx - 8, cy + dialRadius + 2, cfg.label, {
+          fontSize: '8px',
+          fontFamily: 'monospace',
+          color: '#666666',
+        })
+      );
     }
+  }
+
+  private drawDial(
+    g: Phaser.GameObjects.Graphics,
+    cx: number, cy: number, r: number,
+    value: number,
+    colorStart: number, colorEnd: number
+  ): void {
+    g.clear();
+
+    // Dial background
+    g.fillStyle(0x0a0a0a);
+    g.fillCircle(cx, cy, r);
+
+    // Colored arc sectors
+    const arcStart = -140;
+    const arcEnd = 140;
+    const segments = 8;
+    const segAngle = (arcEnd - arcStart) / segments;
+    for (let s = 0; s < segments; s++) {
+      const t = s / (segments - 1);
+      const sr = ((colorStart >> 16) & 0xff);
+      const sg = ((colorStart >> 8) & 0xff);
+      const sb = (colorStart & 0xff);
+      const er = ((colorEnd >> 16) & 0xff);
+      const eg = ((colorEnd >> 8) & 0xff);
+      const eb = (colorEnd & 0xff);
+      const cr = Math.round(sr + (er - sr) * t);
+      const cg = Math.round(sg + (eg - sg) * t);
+      const cb = Math.round(sb + (eb - sb) * t);
+      const color = (cr << 16) | (cg << 8) | cb;
+
+      const a1 = arcStart + s * segAngle;
+      const a2 = a1 + segAngle;
+      g.lineStyle(3, color, 0.6);
+      g.beginPath();
+      g.arc(cx, cy, r - 3, Phaser.Math.DegToRad(a1), Phaser.Math.DegToRad(a2));
+      g.strokePath();
+    }
+
+    // Outer ring
+    g.lineStyle(2, 0x555555);
+    g.strokeCircle(cx, cy, r);
+
+    // Major tick marks
+    g.lineStyle(1, 0x888888);
+    for (let angle = arcStart; angle <= arcEnd; angle += 35) {
+      const rad = Phaser.Math.DegToRad(angle);
+      g.lineBetween(
+        cx + Math.cos(rad) * (r - 6), cy + Math.sin(rad) * (r - 6),
+        cx + Math.cos(rad) * (r - 2), cy + Math.sin(rad) * (r - 2),
+      );
+    }
+
+    // Minor tick marks
+    g.lineStyle(1, 0x444444);
+    for (let angle = arcStart; angle <= arcEnd; angle += 17.5) {
+      const rad = Phaser.Math.DegToRad(angle);
+      g.lineBetween(
+        cx + Math.cos(rad) * (r - 5), cy + Math.sin(rad) * (r - 5),
+        cx + Math.cos(rad) * (r - 2), cy + Math.sin(rad) * (r - 2),
+      );
+    }
+
+    // Needle
+    const needleAngle = arcStart + Math.max(0, Math.min(1, value)) * (arcEnd - arcStart);
+    const rad = Phaser.Math.DegToRad(needleAngle);
+    g.lineStyle(2, 0xff3333);
+    g.lineBetween(
+      cx - Math.cos(rad) * 3, cy - Math.sin(rad) * 3,
+      cx + Math.cos(rad) * (r - 6), cy + Math.sin(rad) * (r - 6)
+    );
+
+    // Center hub
+    g.fillStyle(0xcccccc);
+    g.fillCircle(cx, cy, 3);
+    g.fillStyle(0x888888);
+    g.fillCircle(cx, cy, 1.5);
   }
 
   private createMessageText(): void {
@@ -188,7 +301,7 @@ export class HUD {
     const heli = this.scene.helicopter;
     const fuel = this.scene.fuel;
 
-    // Score (rescued * 100 points each)
+    // Score (rescued * 500 + trip bonus)
     const score = rescue.rescued * 500 + (this.scene.spawnerSystem.rescueTrips * 1000);
     this.scoreValue.setText(String(score).padStart(7, '0'));
 
@@ -209,8 +322,8 @@ export class HUD {
 
     // Fuel gauge
     const fuelPct = Math.max(0, fuel / FUEL_MAX);
-    const maxW = 178;
-    this.fuelBarFill.setSize(maxW * fuelPct, 14);
+    const maxW = 198;
+    this.fuelBarFill.setSize(maxW * fuelPct, 16);
 
     // Fuel color: blue when ok, flashes when low
     if (fuelPct < 0.2) {
@@ -221,7 +334,7 @@ export class HUD {
       this.fuelBarFill.setFillStyle(0x4488ff);
     }
 
-    // Update dial needles (decorative - based on heli speed/altitude)
+    // Update dial needles
     this.updateDials();
   }
 
@@ -229,48 +342,25 @@ export class HUD {
     const heli = this.scene.helicopter;
     const body = heli.body as Phaser.Physics.Arcade.Body;
 
-    // Speed dial, altitude dial, compass dial
     const values = [
-      Math.abs(body.velocity.x) / 250, // speed normalized
-      1 - (heli.y / 400),              // altitude normalized
-      (body.velocity.x + 250) / 500,   // heading normalized
+      Math.abs(body.velocity.x) / 250,
+      1 - (heli.y / 400),
+      (body.velocity.x + 250) / 500,
     ];
 
-    const dialPositions = [470, 520, 560];
-    const dialRadius = 18;
+    const dialConfigs = [
+      { cx: 456, colorStart: 0x22aa22, colorEnd: 0xcc3333 },
+      { cx: 500, colorStart: 0x2244cc, colorEnd: 0x22aacc },
+      { cx: 544, colorStart: 0xcc8822, colorEnd: 0xcccc22 },
+    ];
+    const dialRadius = 20;
 
     for (let i = 0; i < this.dials.length; i++) {
-      const g = this.dials[i];
-      const cx = dialPositions[i];
-      const cy = HUD_HEIGHT / 2;
-      const val = Math.max(0, Math.min(1, values[i]));
-
-      // Redraw dial
-      g.clear();
-      g.fillStyle(0x111111);
-      g.fillCircle(cx, cy, dialRadius);
-      g.lineStyle(2, COLOR_HUD_BORDER);
-      g.strokeCircle(cx, cy, dialRadius);
-
-      // Tick marks
-      g.lineStyle(1, 0x666666);
-      for (let angle = -140; angle <= 140; angle += 35) {
-        const rad = (angle * Math.PI) / 180;
-        g.lineBetween(
-          cx + Math.cos(rad) * (dialRadius - 4), cy + Math.sin(rad) * (dialRadius - 4),
-          cx + Math.cos(rad) * (dialRadius - 1), cy + Math.sin(rad) * (dialRadius - 1),
-        );
-      }
-
-      // Needle
-      const needleAngle = -140 + val * 280;
-      const rad = (needleAngle * Math.PI) / 180;
-      g.lineStyle(2, 0xff4444);
-      g.lineBetween(cx, cy, cx + Math.cos(rad) * (dialRadius - 5), cy + Math.sin(rad) * (dialRadius - 5));
-
-      // Center dot
-      g.fillStyle(0xffffff);
-      g.fillCircle(cx, cy, 2);
+      const cy = HUD_HEIGHT / 2 - 2;
+      this.drawDial(
+        this.dials[i], dialConfigs[i].cx, cy, dialRadius,
+        values[i], dialConfigs[i].colorStart, dialConfigs[i].colorEnd
+      );
     }
   }
 
