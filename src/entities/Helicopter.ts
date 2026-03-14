@@ -26,8 +26,10 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   // Double-tap tracking
   private lastLeftTapTime = 0;
   private lastRightTapTime = 0;
+  private lastDownTapTime = 0;
   private leftWasDown = false;
   private rightWasDown = false;
+  private downWasDown = false;
 
   constructor(scene: GameScene, x: number, y: number) {
     super(scene, x, y, 'heli-right-1');
@@ -100,9 +102,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
       body.setAccelerationX(0);
     }
 
-    if (this.cursors.down.isDown) {
-      this.facing = Facing.FORWARD;
-    }
+    // Down is handled via double-tap in handleDoubleTap
 
     // Update texture based on facing and rotor frame
     this.updateTexture();
@@ -120,6 +120,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   private handleDoubleTap(time: number): void {
     const leftDown = this.cursors.left.isDown;
     const rightDown = this.cursors.right.isDown;
+    const downDown = this.cursors.down.isDown;
 
     // Detect fresh key press (was up, now down)
     if (leftDown && !this.leftWasDown) {
@@ -136,8 +137,16 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
       this.lastRightTapTime = time;
     }
 
+    if (downDown && !this.downWasDown) {
+      if (time - this.lastDownTapTime < DOUBLE_TAP_MS) {
+        this.facing = Facing.FORWARD;
+      }
+      this.lastDownTapTime = time;
+    }
+
     this.leftWasDown = leftDown;
     this.rightWasDown = rightDown;
+    this.downWasDown = downDown;
   }
 
   private updateTilt(body: Phaser.Physics.Arcade.Body): void {
