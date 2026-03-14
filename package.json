@@ -1,0 +1,22 @@
+{
+  "name": "choplifter",
+  "version": "1.0.0",
+  "description": "Choplifter retro game recreation using Phaser 3, TypeScript, and Vite",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "npx playwright test"
+  },
+  "keywords": ["game", "phaser", "choplifter", "retro"],
+  "license": "MIT",
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0"
+  }
+}
